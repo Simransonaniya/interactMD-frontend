@@ -1,0 +1,160 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --brand-dark: #102528;
+  --brand-deep: #14302F;
+  --brand-teal: #39605B;
+  --brand-muted: #426C62;
+  --brand-offwhite: #F7F4EE;
+  --brand-cream: #F2D7B8;
+  --brand-text-dark: #1A2928;
+}
+
+@layer base {
+  body {
+    @apply bg-[#F7F4EE] text-[#1A2928] font-sans antialiased selection:bg-[#F2D7B8] selection:text-[#1A2928];
+  }
+}
+
+/* Custom scrollbars matching brand palette */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #F7F4EE;
+}
+::-webkit-scrollbar-thumb {
+  background: #39605B40;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #39605B80;
+}
+
+/* Strict Hero Gradient from Design Specification */
+.hero-gradient {
+  background: linear-gradient(
+    180deg,
+    #102528 0%,
+    #14302F 35%,
+    #39605B 75%,
+    #426C62 100%
+  );
+}
+
+.hero-surface-dark {
+  background: #14302F;
+}
+
+/* Buttons */
+.btn-cream {
+  background-color: #F2D7B8;
+  color: #1A2928;
+  border-radius: 9999px;
+  font-weight: 600;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.btn-cream:hover {
+  background-color: #f7e1cb;
+  transform: translateY(-1px);
+  box-shadow: 0 6px 16px rgba(242, 215, 184, 0.28);
+}
+.btn-cream:active {
+  transform: translateY(0);
+}
+
+.btn-secondary-outline {
+  background-color: transparent;
+  color: #F7F4EE;
+  border: 1px solid rgba(247, 244, 238, 0.25);
+  border-radius: 9999px;
+  font-weight: 500;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+.btn-secondary-outline:hover {
+  background-color: rgba(247, 244, 238, 0.08);
+  border-color: rgba(247, 244, 238, 0.5);
+  transform: translateY(-1px);
+}
+
+/* ECG Animated Grid & Line - Restrained subtle medical palette */
+.ecg-grid {
+  background-image: 
+    linear-gradient(to right, rgba(57, 96, 91, 0.12) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(57, 96, 91, 0.12) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+
+.ecg-grid-dark {
+  background-image: 
+    linear-gradient(to right, rgba(242, 215, 184, 0.08) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(242, 215, 184, 0.08) 1px, transparent 1px);
+  background-size: 20px 20px;
+}
+
+/* Pulse radar effect */
+@keyframes ping-slow {
+  0% {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  75%, 100% {
+    transform: scale(2.2);
+    opacity: 0;
+  }
+}
+.animate-ping-slow {
+  animation: ping-slow 2.4s cubic-bezier(0, 0, 0.2, 1) infinite;
+}
+
+/* Restrained Telemetry Glow */
+.glow-cream {
+  text-shadow: 0 0 12px rgba(242, 215, 184, 0.45);
+}
+.glow-teal {
+  box-shadow: 0 0 24px rgba(57, 96, 91, 0.3);
+}
+
+.glass-card {
+  background: rgba(16, 37, 40, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(242, 215, 184, 0.15);
+}
+
+.glass-card-light {
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(57, 96, 91, 0.15);
+}
+
+@keyframes float-gentle {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-5px);
+  }
+}
+
+.animate-float {
+  animation: float-gentle 4s ease-in-out infinite;
+}
+
+/* Waveform sweep line */
+@keyframes sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+.animate-sweep {
+  animation: sweep 2.5s linear infinite;
+}
+
