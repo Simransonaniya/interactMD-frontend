@@ -24,8 +24,8 @@ export interface BackendCaseSummary {
   created_at?: string;
 }
 
-// Configurable API base URL from Vite environment or default localhost:8001
-export const API_BASE_URL: string = (import.meta.env?.VITE_API_BASE_URL as string) || 'http://localhost:8001';
+// Configurable API base URL from Vite environment or live Render backend
+export const API_BASE_URL: string = (import.meta.env?.VITE_API_BASE_URL as string) || 'https://interactmd-backend.onrender.com';
 
 let cachedStatus: BackendStatus | null = null;
 let lastCheckTime = 0;
