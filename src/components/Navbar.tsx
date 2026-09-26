@@ -17,6 +17,7 @@ interface NavbarProps {
   setCurrentView: (view: 'landing' | 'login' | 'dashboard' | 'library' | 'simulation' | 'evaluation' | 'admin' | 'educator') => void;
   activeCase: ClinicalCase | null;
   hasActiveSession: boolean;
+  onStartOSCECase?: () => void;
   onOpenAuthModal?: () => void;
 }
 
@@ -28,6 +29,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   setCurrentView,
   activeCase,
   hasActiveSession,
+  onStartOSCECase,
   onOpenAuthModal
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -38,20 +40,29 @@ export const Navbar: React.FC<NavbarProps> = ({
     setIsMobileMenuOpen(false);
   };
 
+  const handleStartAction = () => {
+    if (onStartOSCECase) {
+      onStartOSCECase();
+    } else {
+      handleNavClick('library');
+    }
+    setIsMobileMenuOpen(false);
+  };
+
   return (
     <header className="sticky top-0 z-50 bg-[#102528]/95 backdrop-blur-md border-b border-[#39605B]/30 transition-all text-[#F7F4EE]">
-      <div className="max-w-[1700px] mx-auto px-4 sm:px-6 lg:px-12">
+      <div className="max-w-[1700px] mx-auto px-3 sm:px-6 lg:px-12">
         <div className="flex items-center justify-between h-16">
           
           {/* Logo & Brand */}
-          <div className="flex items-center space-x-2.5 sm:space-x-3 cursor-pointer group" onClick={() => handleNavClick('landing')}>
-            <div className="w-9 h-9 sm:w-10 sm:h-10 rounded-2xl bg-[#14302F] border border-[#39605B]/50 flex items-center justify-center text-[#F2D7B8] shadow-inner transition-transform group-hover:scale-105 shrink-0">
+          <div className="flex items-center space-x-2 sm:space-x-3 cursor-pointer group" onClick={() => handleNavClick('landing')}>
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-2xl bg-[#14302F] border border-[#39605B]/50 flex items-center justify-center text-[#F2D7B8] shadow-inner transition-transform group-hover:scale-105 shrink-0">
               <Activity className="w-4 h-4 sm:w-5 sm:h-5 text-[#F2D7B8]" />
             </div>
             <div>
               <div className="flex items-center space-x-1.5">
-                <span className="font-extrabold text-base sm:text-lg tracking-tight text-[#F7F4EE]">INTERACT<span className="text-[#F2D7B8]">MD</span></span>
-                <span className="text-[9px] sm:text-[10px] uppercase font-semibold tracking-wider px-2 py-0.5 rounded-full bg-[#14302F] text-[#F2D7B8] border border-[#39605B]/60">Clinical AI</span>
+                <span className="font-extrabold text-sm sm:text-lg tracking-tight text-[#F7F4EE]">INTERACT<span className="text-[#F2D7B8]">MD</span></span>
+                <span className="text-[8px] sm:text-[10px] uppercase font-semibold tracking-wider px-1.5 sm:px-2 py-0.5 rounded-full bg-[#14302F] text-[#F2D7B8] border border-[#39605B]/60">Clinical AI</span>
               </div>
               <p className="text-[10px] sm:text-[11px] text-[#F7F4EE]/60 font-medium hidden sm:block">Virtual Patient Simulation Platform</p>
             </div>
@@ -120,7 +131,7 @@ export const Navbar: React.FC<NavbarProps> = ({
           </nav>
 
           {/* Right Actions: Active Encounter Pill & Learner Profile & CTA & Mobile Toggle */}
-          <div className="flex items-center space-x-2 sm:space-x-3">
+          <div className="flex items-center space-x-1.5 sm:space-x-3">
             {hasActiveSession && activeCase && (
               <button
                 onClick={() => handleNavClick('simulation')}
@@ -128,13 +139,13 @@ export const Navbar: React.FC<NavbarProps> = ({
               >
                 <span className="w-2 h-2 rounded-full bg-[#F2D7B8] animate-ping"></span>
                 <span className="hidden xs:inline">Active:</span>
-                <span className="font-bold truncate max-w-[80px] sm:max-w-[120px]">{activeCase.patient.name}</span>
+                <span className="font-bold truncate max-w-[70px] sm:max-w-[120px]">{activeCase.patient.name}</span>
                 <PlayCircle className="w-3.5 h-3.5 ml-0.5 text-[#F2D7B8]" />
               </button>
             )}
 
             {isAuthenticated && user ? (
-              <div className="hidden sm:flex items-center pl-2 border-l border-[#39605B]/40 space-x-2.5">
+              <div className="flex items-center pl-1 sm:pl-2 border-l border-[#39605B]/40 space-x-1.5 sm:space-x-2.5">
                 <div className="hidden lg:flex flex-col text-right">
                   <span className="text-xs font-semibold text-[#F7F4EE]">{user.first_name} {user.last_name}</span>
                   <span className="text-[10px] text-[#F7F4EE]/60 uppercase tracking-wider">{user.role}</span>
@@ -150,25 +161,27 @@ export const Navbar: React.FC<NavbarProps> = ({
             ) : (
               <button
                 onClick={onOpenAuthModal}
-                className="hidden sm:inline-flex items-center space-x-1.5 px-4 py-2 rounded-full border border-[#39605B]/50 hover:border-[#F2D7B8] text-[#F7F4EE] text-xs font-semibold transition-all cursor-pointer"
+                className="hidden sm:inline-flex items-center space-x-1.5 px-3.5 py-1.5 sm:px-4 sm:py-2 rounded-full border border-[#39605B]/50 hover:border-[#F2D7B8] text-[#F7F4EE] text-xs font-semibold transition-all cursor-pointer"
               >
                 <UserIcon className="w-3.5 h-3.5 text-[#F2D7B8]" />
                 <span>Sign In</span>
               </button>
             )}
 
+            {/* Primary Action Button - Always Accessible and Responsive */}
             <button
-              onClick={() => handleNavClick('library')}
-              className="hidden lg:inline-flex items-center space-x-1.5 px-4 py-2 rounded-full bg-[#F2D7B8] hover:bg-[#F8E9D7] text-[#1A2928] text-xs font-bold shadow-sm transition-all cursor-pointer"
+              onClick={handleStartAction}
+              className="inline-flex items-center space-x-1.5 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-[#F2D7B8] hover:bg-[#F8E9D7] text-[#1A2928] text-xs font-bold shadow-sm hover:shadow-md transition-all cursor-pointer"
             >
               <Activity className="w-3.5 h-3.5 text-[#1A2928]" />
-              <span>Start OSCE Case</span>
+              <span className="hidden xs:inline">Start OSCE Case</span>
+              <span className="xs:hidden">Start</span>
             </button>
 
             {/* Mobile Hamburger Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 rounded-xl bg-[#14302F] border border-[#39605B]/40 text-[#F2D7B8] hover:text-[#F7F4EE] transition-colors cursor-pointer"
+              className="md:hidden p-2 rounded-xl bg-[#14302F] border border-[#39605B]/40 text-[#F2D7B8] hover:text-[#F7F4EE] transition-colors cursor-pointer ml-1"
               aria-label="Toggle Navigation Menu"
             >
               {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
@@ -209,49 +222,31 @@ export const Navbar: React.FC<NavbarProps> = ({
             <button 
               onClick={() => handleNavClick('admin')} 
               className={`w-full text-left px-4 py-2.5 rounded-2xl text-xs font-semibold flex items-center justify-between ${currentView === 'admin' ? 'bg-[#F2D7B8] text-[#1A2928] font-bold' : 'text-[#F7F4EE]/80 hover:bg-[#14302F]'}`}>
-              <span>Admin Case CMS</span>
+              <span>Case CMS</span>
               <Settings className="w-4 h-4 opacity-70" />
             </button>
           </div>
 
-          {/* Mobile Profile & Auth CTA */}
-          <div className="pt-3 border-t border-[#39605B]/30 flex flex-col gap-2.5">
-            {isAuthenticated && user ? (
-              <div className="flex items-center justify-between px-2 py-1 bg-[#14302F]/60 rounded-xl border border-[#39605B]/30">
-                <div className="flex items-center space-x-2.5">
-                  <div className="w-8 h-8 rounded-full bg-[#14302F] border border-[#39605B] flex items-center justify-center text-[#F2D7B8] text-xs">
-                    <Stethoscope className="w-4 h-4 text-[#F2D7B8]" />
-                  </div>
-                  <div className="text-xs">
-                    <span className="font-bold text-[#F7F4EE] block">{user.first_name} {user.last_name}</span>
-                    <span className="text-[10px] text-[#F7F4EE]/60 uppercase tracking-wider">{user.role}</span>
-                  </div>
-                </div>
-                <button
-                  onClick={() => { logout(); setIsMobileMenuOpen(false); }}
-                  className="px-2.5 py-1 rounded-lg bg-red-950/50 border border-red-500/30 text-red-300 text-xs flex items-center space-x-1 cursor-pointer"
-                >
-                  <LogOut className="w-3.5 h-3.5" />
-                  <span>Exit</span>
-                </button>
-              </div>
-            ) : (
+          <div className="pt-2 border-t border-[#39605B]/30 flex flex-col space-y-2">
+            <button
+              onClick={handleStartAction}
+              className="w-full py-2.5 px-4 rounded-xl bg-[#F2D7B8] text-[#1A2928] font-bold text-xs flex items-center justify-center space-x-2 shadow-sm"
+            >
+              <Activity className="w-4 h-4" />
+              <span>Launch Live Simulation Case</span>
+            </button>
+            {!isAuthenticated && (
               <button
-                onClick={() => handleNavClick('login')}
-                className="w-full py-2.5 rounded-full border border-[#39605B]/60 bg-[#14302F] text-[#F2D7B8] text-xs font-bold flex items-center justify-center space-x-1.5 cursor-pointer hover:border-[#F2D7B8]"
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  if (onOpenAuthModal) onOpenAuthModal();
+                }}
+                className="w-full py-2.5 px-4 rounded-xl bg-[#14302F] text-[#F7F4EE] font-semibold text-xs border border-[#39605B]/50 flex items-center justify-center space-x-2"
               >
-                <LogIn className="w-3.5 h-3.5" />
-                <span>Sign In / Create Account</span>
+                <UserIcon className="w-4 h-4 text-[#F2D7B8]" />
+                <span>Sign In to Account</span>
               </button>
             )}
-
-            <button
-              onClick={() => handleNavClick('library')}
-              className="w-full py-2.5 rounded-full bg-[#F2D7B8] hover:bg-[#F8E9D7] text-[#1A2928] text-xs font-bold shadow-sm transition-all flex items-center justify-center space-x-1.5 cursor-pointer"
-            >
-              <Activity className="w-3.5 h-3.5 text-[#1A2928]" />
-              <span>Start OSCE Case</span>
-            </button>
           </div>
         </div>
       )}

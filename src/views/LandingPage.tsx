@@ -16,9 +16,11 @@ import {
   HeartPulse,
   Microscope,
   Stethoscope as StethoscopeIcon,
-  BadgeCheck
+  BadgeCheck,
+  BookOpen
 } from 'lucide-react';
 import { ClinicalCase } from '../types/clinical';
+import { CLINICAL_CASES } from '../data/cases';
 import { fetchCases } from '../services/apiClient';
 
 interface LandingPageProps {
@@ -27,9 +29,9 @@ interface LandingPageProps {
 }
 
 export const LandingPage: React.FC<LandingPageProps> = ({ onStartCase, onExploreLibrary }) => {
-  const [cases, setCases] = useState<ClinicalCase[]>([]);
+  const [cases, setCases] = useState<ClinicalCase[]>(CLINICAL_CASES);
   const [previewChat, setPreviewChat] = useState<{ sender: 'student' | 'patient'; text: string }[]>([
-    { sender: 'patient', text: "Doctor, please... It feels like an elephant is sitting on my chest. The pain started 45 minutes ago and radiates to my jaw." }
+    { sender: 'patient', text: CLINICAL_CASES[0]?.patient.initialStatement || "Doctor, please... It feels like an elephant is sitting on my chest. The pain started 45 minutes ago and radiates to my jaw." }
   ]);
   const [selectedPromptIndex, setSelectedPromptIndex] = useState<number | null>(null);
   const [isTyping, setIsTyping] = useState(false);
@@ -37,8 +39,8 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartCase, onExplore
   useEffect(() => {
     fetchCases()
       .then(data => {
-        setCases(data);
-        if (data.length > 0) {
+        if (data && data.length > 0) {
+          setCases(data);
           setPreviewChat([
             { sender: 'patient', text: data[0].patient.initialStatement || "Doctor, please... It feels like an elephant is sitting on my chest." }
           ]);
@@ -46,6 +48,7 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartCase, onExplore
       })
       .catch(() => {});
   }, []);
+
 
   const previewCase = cases.length > 0 ? cases[0] : null;
 
@@ -133,49 +136,50 @@ export const LandingPage: React.FC<LandingPageProps> = ({ onStartCase, onExplore
               </p>
 
               {/* Action Buttons */}
-              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 pt-1">
-                {previewCase ? (
-                  <button
-                    onClick={() => onStartCase(previewCase)}
-                    className="w-full sm:w-auto px-6 py-3 rounded-full bg-[#F2D7B8] hover:bg-[#F8E9D7] text-[#1A2928] font-bold text-xs sm:text-sm shadow-md hover:shadow-lg flex items-center justify-center space-x-2 transition-all group cursor-pointer"
-                  >
-                    <Play className="w-3.5 h-3.5 fill-[#1A2928] text-[#1A2928] transition-transform group-hover:scale-110" />
-                    <span>Start Case: {previewCase.title}</span>
-                    <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
-                  </button>
-                ) : (
-                  <button
-                    onClick={onExploreLibrary}
-                    className="w-full sm:w-auto px-6 py-3 rounded-full bg-[#F2D7B8] hover:bg-[#F8E9D7] text-[#1A2928] font-bold text-xs sm:text-sm shadow-md hover:shadow-lg flex items-center justify-center space-x-2 transition-all group cursor-pointer"
-                  >
-                    <Stethoscope className="w-3.5 h-3.5 text-[#1A2928]" />
-                    <span>Explore Case Library</span>
-                    <ArrowRight className="w-3.5 h-3.5 transition-transform group-hover:translate-x-1" />
-                  </button>
-                )}
+              <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3 pt-2 relative z-20">
+                <button
+                  onClick={() => onStartCase(previewCase || CLINICAL_CASES[0])}
+                  className="w-full sm:w-auto px-6 py-3.5 rounded-full bg-[#F2D7B8] hover:bg-[#F8E9D7] active:scale-95 text-[#1A2928] font-bold text-xs sm:text-sm shadow-md hover:shadow-xl flex items-center justify-center space-x-2 transition-all group cursor-pointer"
+                >
+                  <Play className="w-4 h-4 fill-[#1A2928] text-[#1A2928] transition-transform group-hover:scale-110" />
+                  <span>Start Case: {previewCase ? previewCase.title : 'Acute Crushing Retrosternal Chest Pain'}</span>
+                  <ArrowRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
+                </button>
 
                 <button
                   onClick={onExploreLibrary}
-                  className="w-full sm:w-auto px-5 py-3 rounded-full bg-[#102528]/40 hover:bg-[#F7F4EE]/10 text-[#F7F4EE] font-medium text-xs sm:text-sm border border-[#F7F4EE]/25 hover:border-[#F7F4EE]/50 flex items-center justify-center space-x-2 transition-all cursor-pointer backdrop-blur-xs"
+                  className="w-full sm:w-auto px-5 py-3.5 rounded-full bg-[#102528]/60 hover:bg-[#14302F] active:scale-95 text-[#F7F4EE] font-semibold text-xs sm:text-sm border border-[#39605B]/80 hover:border-[#F2D7B8]/70 flex items-center justify-center space-x-2 transition-all cursor-pointer backdrop-blur-md shadow-sm"
                 >
-                  <span>Browse 6 Benchmark Cases</span>
+                  <BookOpen className="w-4 h-4 text-[#F2D7B8]" />
+                  <span>Browse {cases.length > 0 ? cases.length : 6} Benchmark Cases</span>
                 </button>
               </div>
 
-              {/* Trust Badges & Highlights */}
-              <div className="pt-2 flex flex-wrap items-center justify-center lg:justify-start gap-4 sm:gap-6 text-[11px] sm:text-xs text-[#F7F4EE]/80 font-medium">
-                <div className="flex items-center space-x-1.5 bg-[#102528]/40 px-2.5 py-1 rounded-full border border-white/5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#F2D7B8]" />
+              {/* Clickable Trust Badges & Highlights */}
+              <div className="pt-3 flex flex-wrap items-center justify-center lg:justify-start gap-2.5 sm:gap-3.5 text-[11px] sm:text-xs text-[#F7F4EE]/90 font-medium relative z-20">
+                <button
+                  onClick={onExploreLibrary}
+                  className="flex items-center space-x-1.5 bg-[#14302F]/80 hover:bg-[#1E4543] active:scale-95 px-3 py-1.5 rounded-full border border-[#39605B]/60 hover:border-[#F2D7B8]/60 text-[#F7F4EE] cursor-pointer transition-all shadow-xs group"
+                >
+                  <BadgeCheck className="w-3.5 h-3.5 text-[#F2D7B8] group-hover:scale-110 transition-transform" />
                   <span>OSCE & USMLE Aligned</span>
-                </div>
-                <div className="flex items-center space-x-1.5 bg-[#102528]/40 px-2.5 py-1 rounded-full border border-white/5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#F2D7B8]" />
+                </button>
+
+                <button
+                  onClick={onExploreLibrary}
+                  className="flex items-center space-x-1.5 bg-[#14302F]/80 hover:bg-[#1E4543] active:scale-95 px-3 py-1.5 rounded-full border border-[#39605B]/60 hover:border-[#F2D7B8]/60 text-[#F7F4EE] cursor-pointer transition-all shadow-xs group"
+                >
+                  <Award className="w-3.5 h-3.5 text-[#F2D7B8] group-hover:scale-110 transition-transform" />
                   <span>5-Dimension AI Rubric</span>
-                </div>
-                <div className="flex items-center space-x-1.5 bg-[#102528]/40 px-2.5 py-1 rounded-full border border-white/5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-[#F2D7B8]" />
+                </button>
+
+                <button
+                  onClick={onExploreLibrary}
+                  className="flex items-center space-x-1.5 bg-[#14302F]/80 hover:bg-[#1E4543] active:scale-95 px-3 py-1.5 rounded-full border border-[#39605B]/60 hover:border-[#F2D7B8]/60 text-[#F7F4EE] cursor-pointer transition-all shadow-xs group"
+                >
+                  <HeartPulse className="w-3.5 h-3.5 text-[#F2D7B8] group-hover:scale-110 transition-transform" />
                   <span>STAT Labs & ECGs</span>
-                </div>
+                </button>
               </div>
 
             </div>

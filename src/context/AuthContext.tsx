@@ -21,6 +21,29 @@ interface AuthContextType {
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 const API_BASE_URL = (import.meta.env?.VITE_API_BASE_URL as string) || 'https://interactmd-backend.onrender.com';
+const CHATBOT_API_URL = (import.meta.env?.VITE_CHATBOT_API_URL as string) || 'https://interactmdchatbot-1.onrender.com';
+
+async function fetchAuthEndpoint(path: string, options: RequestInit = {}): Promise<Response> {
+  const urls = API_BASE_URL === CHATBOT_API_URL ? [API_BASE_URL] : [API_BASE_URL, CHATBOT_API_URL];
+  let lastRes: Response | null = null;
+  let lastErr: any = null;
+
+  for (const base of urls) {
+    try {
+      const res = await fetch(`${base}${path}`, options);
+      if (res.ok) return res;
+      lastRes = res;
+      if (res.status === 400 || res.status === 401 || res.status === 422) {
+        return res; // Client-side authentication response
+      }
+    } catch (err) {
+      lastErr = err;
+    }
+  }
+
+  if (lastRes) return lastRes;
+  throw lastErr || new Error(`Unable to reach authentication server on ${path}`);
+}
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<UserProfile | null>(null);
@@ -35,7 +58,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return;
       }
       try {
-        const res = await fetch(`${API_BASE_URL}/api/v1/auth/me`, {
+        const res = await fetchAuthEndpoint('/api/v1/auth/me', {
           headers: {
             'Authorization': `Bearer ${token}`
           }
@@ -66,8 +89,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, [token]);
 
   const login = async (email: string, password: string) => {
-    console.log(`[Auth] POST ${API_BASE_URL}/api/v1/auth/login`, { email });
-    const res = await fetch(`${API_BASE_URL}/api/v1/auth/login`, {
+    console.log(`[Auth] POST /api/v1/auth/login`, { email });
+    const res = await fetchAuthEndpoint('/api/v1/auth/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
@@ -95,8 +118,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const register = async (firstName: string, lastName: string, email: string, password: string) => {
-    console.log(`[Auth] POST ${API_BASE_URL}/api/v1/auth/register`, { email, firstName, lastName });
-    const res = await fetch(`${API_BASE_URL}/api/v1/auth/register`, {
+    console.log(`[Auth] POST /api/v1/auth/register`, { email, firstName, lastName });
+    const res = await fetchAuthEndpoint('/api/v1/auth/register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

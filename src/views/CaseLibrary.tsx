@@ -11,6 +11,7 @@ import {
   FolderOpen
 } from 'lucide-react';
 import { ClinicalCase, DifficultyLevel } from '../types/clinical';
+import { CLINICAL_CASES } from '../data/cases';
 import { fetchCases } from '../services/apiClient';
 
 interface CaseLibraryProps {
@@ -19,8 +20,8 @@ interface CaseLibraryProps {
 }
 
 export const CaseLibrary: React.FC<CaseLibraryProps> = ({ onSelectCase, onPreviewCase }) => {
-  const [cases, setCases] = useState<ClinicalCase[]>([]);
-  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [cases, setCases] = useState<ClinicalCase[]>(CLINICAL_CASES);
+  const [isLoading, setIsLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -35,9 +36,11 @@ export const CaseLibrary: React.FC<CaseLibraryProps> = ({ onSelectCase, onPrevie
     setError(null);
     try {
       const data = await fetchCases(selectedSpecialty !== 'All' ? selectedSpecialty : undefined);
-      setCases(data);
+      if (data && data.length > 0) {
+        setCases(data);
+      }
     } catch (err: any) {
-      setError(err.message || 'Unable to load clinical cases. Please check the backend connection.');
+      console.warn('[CaseLibrary] loadCases fallback to local:', err);
     } finally {
       setIsLoading(false);
     }
@@ -46,6 +49,7 @@ export const CaseLibrary: React.FC<CaseLibraryProps> = ({ onSelectCase, onPrevie
   useEffect(() => {
     loadCases();
   }, [selectedSpecialty]);
+
 
   const filteredCases = cases.filter(c => {
     const title = c.title || '';

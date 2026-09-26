@@ -14,6 +14,7 @@ import { AuthModal } from './components/AuthModal';
 import { AuthProvider } from './context/AuthContext';
 
 import { ClinicalCase, ChatMessage, EvaluationResult } from './types/clinical';
+import { CLINICAL_CASES } from './data/cases';
 import { submitEncounterEvaluation, startSimulationSession, fetchCaseDetail } from './services/apiClient';
 
 const MainContent: React.FC = () => {
@@ -39,28 +40,32 @@ const MainContent: React.FC = () => {
   // Evaluation Result
   const [evaluationResult, setEvaluationResult] = useState<EvaluationResult | null>(null);
 
-  // Handlers
-  const handleStartCase = async (c: ClinicalCase) => {
-    let fullCase = c;
-    try {
-      const detailed = await fetchCaseDetail(c.id);
-      if (detailed) {
-        fullCase = detailed;
-      }
-    } catch (err) {
-      console.warn('[App] Could not fetch detailed case, using provided case:', err);
-    }
-
-    setActiveCase(fullCase);
+  // Handlers - Instant view switch, background session initialization
+  const handleStartCase = (c?: ClinicalCase | null) => {
+    const targetCase = c || activeCase || CLINICAL_CASES[0];
+    setActiveCase(targetCase);
     setPreviewModalCase(null);
     setHasActiveSession(true);
     setEvaluationResult(null);
-
-    // Create session in backend if online
-    const sessionId = await startSimulationSession(fullCase.id);
-    setActiveSessionId(sessionId);
-
     setCurrentView('simulation');
+
+    (async () => {
+      try {
+        const detailed = await fetchCaseDetail(targetCase.id);
+        if (detailed) {
+          setActiveCase(detailed);
+        }
+      } catch (err) {
+        console.warn('[App] Could not fetch detailed case:', err);
+      }
+
+      try {
+        const sessionId = await startSimulationSession(targetCase.id);
+        setActiveSessionId(sessionId);
+      } catch (err) {
+        setActiveSessionId(`session_${targetCase.id}_${Date.now()}`);
+      }
+    })();
   };
 
   const handleOpenCaseBrief = (c: ClinicalCase) => {
@@ -107,6 +112,8 @@ const MainContent: React.FC = () => {
   const handleRetryCase = () => {
     if (activeCase) {
       handleStartCase(activeCase);
+    } else {
+      handleStartCase(CLINICAL_CASES[0]);
     }
   };
 
@@ -124,6 +131,7 @@ const MainContent: React.FC = () => {
           setCurrentView={setCurrentView}
           activeCase={activeCase}
           hasActiveSession={hasActiveSession}
+          onStartOSCECase={() => handleStartCase(activeCase || CLINICAL_CASES[0])}
           onOpenAuthModal={() => setCurrentView('login')}
         />
       )}
@@ -136,6 +144,7 @@ const MainContent: React.FC = () => {
             onExploreLibrary={() => setCurrentView('library')}
           />
         )}
+
 
         {currentView === 'login' && (
           <LoginPage
