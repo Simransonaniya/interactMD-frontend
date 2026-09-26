@@ -411,50 +411,30 @@ export async function sendPatientChatMessage(
   const empathyKeywords = ['sorry', 'understand', 'help', 'comfort', 'hear', 'worry', 'reassure', 'ease', 'listen', 'relax'];
   const isEmpathy = empathyKeywords.some(k => lowerMsg.includes(k));
 
-  // Try backend simulation / chatbot endpoints with generous timeout for LLM inference
+  // Primary: Dedicated production AI dialogue endpoint on Python Chatbot Backend
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 25000);
 
-    if (sessionId) {
-      try {
-        const res = await fetchWithFallback(`/api/v1/sessions/${sessionId}/messages`, {
-          method: 'POST',
-          headers: getAuthHeaders(),
-          body: JSON.stringify({ message: userMessage }),
-          signal: controller.signal
-        });
-        if (res.ok) {
-          clearTimeout(timeoutId);
-          const msg = await res.json();
-          return {
-            response: msg.message,
-            empathyDetected: msg.metadata_json?.empathy_detected ?? isEmpathy,
-            category: (msg.metadata_json?.category as ChatMessage['category']) || 'General',
-            provider: msg.metadata_json?.provider || 'AI Backend',
-            suggestedTopics: msg.metadata_json?.suggested_topics || [],
-            sessionId
-          };
-        }
-      } catch {
-        // Fallback to simulation endpoint
-      }
-    }
+    const historyPayload = conversationHistory.map(m => ({
+      id: m.id,
+      sender: m.sender,
+      text: m.text,
+      category: m.category || 'General',
+      empathyDetected: m.empathyDetected || false
+    }));
 
     const simRes = await fetchWithFallback('/api/simulation/chat', {
       method: 'POST',
-      headers: getAuthHeaders(),
+      headers: {
+        'Content-Type': 'application/json',
+        ...getAuthHeaders()
+      },
       body: JSON.stringify({
-        case_id: clinicalCase.id,
-        session_id: sessionId,
+        case_id: clinicalCase.id || 'chest_pain_001',
+        session_id: sessionId || `session_${clinicalCase.id}`,
         message: userMessage,
-        conversation_history: conversationHistory.map(m => ({
-          id: m.id,
-          sender: m.sender,
-          text: m.text,
-          category: m.category,
-          empathyDetected: m.empathyDetected
-        }))
+        conversation_history: historyPayload
       }),
       signal: controller.signal
     }, true);
@@ -462,14 +442,17 @@ export async function sendPatientChatMessage(
 
     if (simRes.ok) {
       const data = await simRes.json();
-      return {
-        response: data.reply || data.response,
-        empathyDetected: data.empathy_detected ?? isEmpathy,
-        category: (data.category as ChatMessage['category']) || 'General',
-        provider: data.provider || 'AI Patient Engine',
-        suggestedTopics: data.suggested_topics,
-        sessionId: data.session_id || sessionId || undefined
-      };
+      const replyText = data.reply || data.response || (data.message && data.message.text) || '';
+      if (replyText) {
+        return {
+          response: replyText,
+          empathyDetected: data.empathy_detected ?? isEmpathy,
+          category: (data.category as ChatMessage['category']) || 'General',
+          provider: data.provider || 'HuggingFace (meta-llama/Llama-3.2-3B-Instruct)',
+          suggestedTopics: data.suggested_topics || [],
+          sessionId: data.session_id || sessionId || undefined
+        };
+      }
     }
   } catch (err) {
     console.warn('[API] AI Patient chat fallback to clinical engine:', err);
