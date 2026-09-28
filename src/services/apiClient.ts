@@ -442,71 +442,24 @@ export async function sendPatientChatMessage(
 
     if (simRes.ok) {
       const data = await simRes.json();
-      const replyText = data.reply || data.response || (data.message && data.message.text) || '';
-      if (replyText) {
-        return {
-          response: replyText,
-          empathyDetected: data.empathy_detected ?? isEmpathy,
-          category: (data.category as ChatMessage['category']) || 'General',
-          provider: data.provider || 'HuggingFace (meta-llama/Llama-3.2-3B-Instruct)',
-          suggestedTopics: data.suggested_topics || [],
-          sessionId: data.session_id || sessionId || undefined
-        };
-      }
+      const replyText = data.reply || data.response || (data.message && data.message.text) || 'I understand, doctor.';
+      return {
+        response: replyText,
+        empathyDetected: data.empathy_detected ?? isEmpathy,
+        category: (data.category as ChatMessage['category']) || 'General',
+        provider: data.provider || 'InteractMD AI Patient Engine',
+        suggestedTopics: data.suggested_topics || [],
+        sessionId: data.session_id || sessionId || undefined
+      };
+    } else {
+      const errData = await simRes.json().catch(() => ({}));
+      const errMsg = errData.detail || errData.message || `Backend returned error ${simRes.status}: ${simRes.statusText}`;
+      throw new Error(errMsg);
     }
-  } catch (err) {
-    console.warn('[API] AI Patient chat fallback to clinical engine:', err);
+  } catch (err: any) {
+    console.error('[API] AI Patient chat error:', err);
+    throw err;
   }
-
-  // Clinical Rule-Based Simulation Engine Fallback
-  const facts = clinicalCase.facts || ({} as any);
-  let reply = '';
-  let category: ChatMessage['category'] = 'General';
-
-  if (lowerMsg.includes('start') || lowerMsg.includes('when') || lowerMsg.includes('onset') || lowerMsg.includes('how long') || lowerMsg.includes('time')) {
-    reply = facts.onset || `It started about 45 minutes ago while I was walking. It came on very suddenly and has been getting progressively worse.`;
-    category = 'HPI';
-  } else if (lowerMsg.includes('feel') || lowerMsg.includes('describe') || lowerMsg.includes('character') || lowerMsg.includes('sharp') || lowerMsg.includes('heavy') || lowerMsg.includes('pressure') || lowerMsg.includes('dull')) {
-    reply = facts.quality || `It feels like an intense, heavy squeezing pressure right in the center of my chest. Like an elephant sitting on me.`;
-    category = 'HPI';
-  } else if (lowerMsg.includes('radiat') || lowerMsg.includes('spread') || lowerMsg.includes('arm') || lowerMsg.includes('jaw') || lowerMsg.includes('back') || lowerMsg.includes('neck')) {
-    reply = facts.radiation || `Yes, doctor. The pain radiates directly up into my left jaw and shoots down my left arm.`;
-    category = 'HPI';
-  } else if (lowerMsg.includes('breath') || lowerMsg.includes('sweat') || lowerMsg.includes('nausea') || lowerMsg.includes('dizzy') || lowerMsg.includes('short of breath') || lowerMsg.includes('vomit')) {
-    reply = `Yes, I am feeling very short of breath and nauseous, and broke out in a cold sweat when the pain began.`;
-    category = 'HPI';
-  } else if (lowerMsg.includes('medic') || lowerMsg.includes('drug') || lowerMsg.includes('pill') || lowerMsg.includes('prescription')) {
-    const meds = Array.isArray(facts.medications) ? facts.medications.join(', ') : 'Lisinopril 20mg and Atorvastatin 40mg daily.';
-    reply = `I take my daily medications: ${meds}`;
-    category = 'Meds';
-  } else if (lowerMsg.includes('allerg')) {
-    const allergies = Array.isArray(facts.allergies) ? facts.allergies.join(', ') : 'No known drug allergies (NKDA).';
-    reply = `Allergies: ${allergies}`;
-    category = 'Allergies';
-  } else if (lowerMsg.includes('smoke') || lowerMsg.includes('alcohol') || lowerMsg.includes('drink') || lowerMsg.includes('tobacco') || lowerMsg.includes('work') || lowerMsg.includes('stress')) {
-    reply = Array.isArray(facts.socialHistory) ? facts.socialHistory.join(' ') : `I smoked a pack a day for 25 years. I work in an office under a lot of stress.`;
-    category = 'Social';
-  } else if (lowerMsg.includes('family') || lowerMsg.includes('father') || lowerMsg.includes('mother') || lowerMsg.includes('brother') || lowerMsg.includes('parent')) {
-    reply = Array.isArray(facts.familyHistory) ? facts.familyHistory.join(' ') : `My father had a heart attack in his early 50s.`;
-    category = 'PMH';
-  } else if (lowerMsg.includes('better') || lowerMsg.includes('worse') || lowerMsg.includes('reliev') || lowerMsg.includes('provok') || lowerMsg.includes('rest')) {
-    reply = facts.provocationPalliative || `Resting helped slightly with my breath, but the pressure in my chest has not gone away.`;
-    category = 'HPI';
-  } else if (isEmpathy) {
-    reply = `Thank you, doctor. I really appreciate your care. I am quite worried about what is happening to me.`;
-    category = 'General';
-  } else {
-    reply = `Doctor, ${clinicalCase.patient.presentationComplaint || clinicalCase.patient.initialStatement}`;
-  }
-
-  return {
-    response: reply,
-    empathyDetected: isEmpathy,
-    category,
-    provider: 'InteractMD AI Patient Engine',
-    suggestedTopics: ['Onset & Duration', 'Radiation & Character', 'Associated Symptoms', 'Cardiac Risk Profile'],
-    sessionId: sessionId || `session_${clinicalCase.id}_${Date.now()}`
-  };
 }
 
 
